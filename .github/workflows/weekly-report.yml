@@ -1,0 +1,48 @@
+name: Weekly AI & Tech Intelligence Report
+
+on:
+  schedule:
+    # Every Monday at 00:00 UTC = 07:00 AM GMT+7 (Vietnam)
+    - cron: "0 0 * * 1"
+  workflow_dispatch: # Allow manual trigger from GitHub UI
+
+jobs:
+  send-report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Generate AI report
+        id: generate
+        env:
+          CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+        run: |
+          report_path=$(python generate_report.py)
+          echo "report_path=$report_path" >> $GITHUB_OUTPUT
+
+      - name: Send email
+        env:
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_APP_PASSWORD: ${{ secrets.SMTP_APP_PASSWORD }}
+          RECIPIENT_EMAIL: ngoxuanphuc16@gmail.com
+        run: python send_report.py ${{ steps.generate.outputs.report_path }}
+
+      - name: Upload report as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-report-${{ github.run_id }}
+          path: reports/
+          retention-days: 30
