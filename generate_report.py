@@ -13,12 +13,9 @@ import feedparser
 RSS_FEEDS = [
     ("TechCrunch AI", "https://techcrunch.com/category/artificial-intelligence/feed/"),
     ("The Verge",     "https://www.theverge.com/rss/ai-artificial-intelligence/index.xml"),
-    ("Ars Technica",  "https://feeds.arstechnica.com/arstechnica/technology-lab"),
     ("VentureBeat",   "https://venturebeat.com/category/ai/feed/"),
-    ("MIT Tech Review", "https://www.technologyreview.com/feed/"),
-    ("Hacker News",   "https://news.ycombinator.com/rss"),
+    ("Ars Technica",  "https://feeds.arstechnica.com/arstechnica/technology-lab"),
     ("ArXiv CS.AI",   "https://rss.arxiv.org/rss/cs.AI"),
-    ("ArXiv CS.LG",   "https://rss.arxiv.org/rss/cs.LG"),
 ]
 
 SYSTEM_PROMPT = """
@@ -41,7 +38,7 @@ def fetch_articles(days: int = 7) -> str:
     for source, url in RSS_FEEDS:
         try:
             feed = feedparser.parse(url)
-            for entry in feed.entries[:15]:
+            for entry in feed.entries[:6]:
                 published = None
                 if hasattr(entry, "published_parsed") and entry.published_parsed:
                     published = datetime(*entry.published_parsed[:6], tzinfo=timezone.utc)
@@ -49,9 +46,9 @@ def fetch_articles(days: int = 7) -> str:
                     continue
                 title = entry.get("title", "").strip()
                 link  = entry.get("link", "").strip()
-                summary = entry.get("summary", entry.get("description", ""))[:300].strip()
+                summary = entry.get("summary", entry.get("description", ""))[:120].strip()
                 if title and link:
-                    articles.append(f"[{source}] {title}\nURL: {link}\nTóm tắt: {summary}\n")
+                    articles.append(f"[{source}] {title} | {link} | {summary}")
         except Exception as e:
             print(f"[fetch] Warning: could not fetch {source}: {e}")
 
@@ -65,14 +62,13 @@ def build_prompt(articles_text: str) -> str:
     date_str = now.strftime("%d/%m/%Y")
 
     return f"""
-Dưới đây là danh sách bài viết thu thập từ RSS feeds trong 7 ngày qua:
+Tin tức AI/công nghệ 7 ngày qua (RSS):
 
 {articles_text}
 
-Hãy thực hiện:
-1. LỌC: Giữ lại những bài có giá trị kỹ thuật thực sự (model mới, benchmark, kiến trúc, open-source nổi bật, M&A chiến lược, chính sách AI lớn). Loại bỏ quảng cáo, gọi vốn nhỏ không đột phá, tin lặp.
-2. PHÂN CỤM: Gom các bài về cùng sự kiện thành 1 mục.
-3. XUẤT HTML hoàn chỉnh theo template sau (thay tất cả placeholder bằng nội dung thực, Tuần={week_num}, Ngày={date_str}):
+Lọc (giữ: model mới có benchmark, open-source nổi bật, M&A chiến lược, đột phá kiến trúc; bỏ: quảng cáo, seed round nhỏ, tin lặp). Gom cùng sự kiện thành 1 mục.
+
+Xuất HTML hoàn chỉnh, Tuần {week_num}, ngày {date_str}:
 
 <!DOCTYPE html>
 <html>
