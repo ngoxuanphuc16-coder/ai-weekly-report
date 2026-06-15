@@ -27,7 +27,7 @@ jobs:
       - name: Generate AI report
         id: generate
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: |
           report_path=$(python generate_report.py)
           echo "report_path=$report_path" >> $GITHUB_OUTPUT
