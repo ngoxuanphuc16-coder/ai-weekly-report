@@ -50,9 +50,9 @@ def fetch_articles(days: int = 7) -> str:
                 if title and link:
                     articles.append(f"[{source}] {title} | {link} | {summary}")
         except Exception as e:
-            print(f"[fetch] Warning: could not fetch {source}: {e}")
+            print(f"[fetch] Warning: could not fetch {source}: {e}", file=sys.stderr)
 
-    print(f"[fetch] Collected {len(articles)} articles from RSS feeds")
+    print(f"[fetch] Collected {len(articles)} articles from RSS feeds", file=sys.stderr)
     return "\n---\n".join(articles)
 
 
@@ -115,7 +115,7 @@ def generate_report() -> str:
         raise ValueError("No articles collected from RSS feeds")
 
     client = Groq(api_key=os.environ["GROQ_API_KEY"])
-    print("[generate] Calling Groq API (llama-3.3-70b)...")
+    print("[generate] Calling Groq API (llama-3.3-70b)...", file=sys.stderr)
 
     response = client.chat.completions.create(
         model="llama-3.3-70b-versatile",
@@ -134,7 +134,7 @@ def generate_report() -> str:
         lines = html_content.splitlines()
         html_content = "\n".join(lines[1:-1] if lines[-1].strip() == "```" else lines[1:])
 
-    print(f"[generate] Report generated ({len(html_content)} chars)")
+    print(f"[generate] Report generated ({len(html_content)} chars)", file=sys.stderr)
     return html_content
 
 
@@ -144,7 +144,7 @@ def save_report(html_content: str) -> Path:
     output_dir.mkdir(exist_ok=True)
     output_path = output_dir / f"report-{today}.html"
     output_path.write_text(html_content, encoding="utf-8")
-    print(f"[generate] Saved to {output_path}")
+    print(f"[generate] Saved to {output_path}", file=sys.stderr)
     return output_path
 
 
